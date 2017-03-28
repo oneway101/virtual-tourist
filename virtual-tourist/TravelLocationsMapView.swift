@@ -24,11 +24,11 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
     
     func dropPin(gestureRecognizer:UILongPressGestureRecognizer){
         let location = gestureRecognizer.location(in: mapView)
-        //let newCoordinates = mapView.convert(touchPoint, toCoordinateFrom: mapView)
+        let newCoordinates = mapView.convert(location, toCoordinateFrom: mapView)
         let annotation = MKPointAnnotation()
         annotation.coordinate = newCoordinates
         print("**annotation**")
-        print(annotation)
+        print(annotation.coordinate)
         performUIUpdatesOnMain {
             self.mapView.addAnnotation(annotation)
         }
