@@ -40,6 +40,7 @@
                     <connections>
                         <outlet property="editButton" destination="pHo-h0-Z9q" id="iIu-n0-S5N"/>
                         <outlet property="mapView" destination="tQE-Rg-PjX" id="4MV-2d-Zqk"/>
+                        <segue destination="0Dw-j4-XzY" kind="show" identifier="PhotoAlbumView" id="ipE-YJ-tWG"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
@@ -49,7 +50,7 @@
         <!--Photo Album View Controller-->
         <scene sceneID="dzu-96-9aE">
             <objects>
-                <viewController id="0Dw-j4-XzY" customClass="PhotoAlbumViewController" customModule="virtual_tourist" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="PhotoAlbumView" id="0Dw-j4-XzY" customClass="PhotoAlbumViewController" customModule="virtual_tourist" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="tPp-DG-Vi5"/>
                         <viewControllerLayoutGuide type="bottom" id="gpP-D2-hgH"/>
@@ -125,7 +126,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="r7K-8f-olk" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1896.8" y="122.78860569715144"/>
+            <point key="canvasLocation" x="1911" y="123"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="J6z-Wh-VNq">
