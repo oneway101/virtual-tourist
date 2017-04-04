@@ -75,7 +75,7 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
         let fetchRequest:NSFetchRequest<Pin> = Pin.fetchRequest()
         
         do {
-            let searchResults = try CoreDataStack.getContext().fetch(fetchRequest)
+            let searchResults = try CoreDataStack.getContext()
             print("number of results: \(searchResults.count)")
             var annotations = [MKPointAnnotation]()
             for result in searchResults as [Pin]{
@@ -85,6 +85,7 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
                 let annotation = MKPointAnnotation()
                 annotation.coordinate = coordinate
                 annotations.append(annotation)
+                pins.append(result)
                 
             }
             self.mapView.addAnnotations(annotations)
@@ -115,26 +116,26 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
     }
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        print("Pin Tapped")
         mapView.deselectAnnotation(view.annotation, animated: true)
-        
-        if isEditMode {
-            let lat = view.annotation?.coordinate.latitude
-            let lon = view.annotation?.coordinate.longitude
-            print("selected pin lat:\(lat) lon:\(lon)")
-            //Q: How to delete the pin?
-            // pins array is empty.
-            for pin in pins {
-                if pin.latitude == lat!, pin.longitude == lon! {
-                    print("found pin info")
+        let lat = view.annotation?.coordinate.latitude
+        let lon = view.annotation?.coordinate.longitude
+        print("selected pin lat:\(lat) lon:\(lon)")
+        for pin in pins {
+            if pin.latitude == lat!, pin.longitude == lon! {
+                let selectedPin = pin
+                print("found pin info")
+                if isEditMode {
+                    //Delete selectedPin
+                    
+                } else {
+                    print("segue to the photo album")
+                    //Q: PerformSeque to the photoAlbumView
+                    performSegue(withIdentifier: "PhotoAlbumView", sender: selectedPin)
+                    
                 }
             }
-        } else {
-        print("segue to the photo album")
-        //Q: PerformSeque to the photoAlbumView
-        //performSegue(withIdentifier: "PhotoAlbumView", sender: self)
-            
         }
+        
     }
     
     func removePin(gesture: UIGestureRecognizer) {
