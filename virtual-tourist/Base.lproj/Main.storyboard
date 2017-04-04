@@ -25,20 +25,38 @@
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="tQE-Rg-PjX">
                                 <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                             </mapView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tap Pins to Delete" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8XR-4T-66U">
+                                <rect key="frame" x="0.0" y="627" width="375" height="40"/>
+                                <color key="backgroundColor" red="1" green="0.061114607750000001" blue="0.030600021670000001" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="40" id="gZS-Mb-yu8"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="tQE-Rg-PjX" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="2oe-ab-lgg"/>
                             <constraint firstAttribute="trailing" secondItem="tQE-Rg-PjX" secondAttribute="trailing" id="AHb-q4-B5M"/>
                             <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="tQE-Rg-PjX" secondAttribute="bottom" id="HSr-tn-b4p"/>
+                            <constraint firstItem="8XR-4T-66U" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="Kdg-t4-40J"/>
                             <constraint firstItem="tQE-Rg-PjX" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="cOy-9b-yqq"/>
+                            <constraint firstItem="8XR-4T-66U" firstAttribute="width" secondItem="8bC-Xf-vdC" secondAttribute="width" id="coc-Dm-HUM"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="8XR-4T-66U" secondAttribute="bottom" id="fNd-v9-cHA"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Virtual Tourist" id="LCD-pY-9gT">
-                        <barButtonItem key="rightBarButtonItem" title="Edit" id="pHo-h0-Z9q"/>
+                        <barButtonItem key="rightBarButtonItem" title="Edit" id="pHo-h0-Z9q">
+                            <connections>
+                                <action selector="editMode:" destination="BYZ-38-t0r" id="pAz-eD-Kmz"/>
+                            </connections>
+                        </barButtonItem>
                     </navigationItem>
                     <connections>
                         <outlet property="editButton" destination="pHo-h0-Z9q" id="iIu-n0-S5N"/>
+                        <outlet property="editModeLabel" destination="8XR-4T-66U" id="hFL-fm-IiB"/>
                         <outlet property="mapView" destination="tQE-Rg-PjX" id="4MV-2d-Zqk"/>
                         <segue destination="0Dw-j4-XzY" kind="show" identifier="PhotoAlbumView" id="ipE-YJ-tWG"/>
                     </connections>
@@ -60,13 +78,13 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="top" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="cn0-k6-Maw">
-                                <rect key="frame" x="0.0" y="28" width="375" height="200"/>
+                                <rect key="frame" x="0.0" y="72" width="375" height="200"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="200" id="MJk-bB-PB9"/>
                                 </constraints>
                             </mapView>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="vaF-0W-sp8">
-                                <rect key="frame" x="0.0" y="228" width="375" height="439"/>
+                                <rect key="frame" x="0.0" y="272" width="375" height="395"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="10" minimumInteritemSpacing="10" id="Gdg-QZ-Krh">
                                     <size key="itemSize" width="100" height="100"/>

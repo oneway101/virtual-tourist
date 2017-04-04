@@ -13,7 +13,7 @@ class FlickrClient: NSObject {
     let methodParameters = [
         Constants.FlickrParameterKeys.Method: Constants.FlickrParameterValues.SearchMethod,
         Constants.FlickrParameterKeys.APIKey: Constants.FlickrParameterValues.APIKey,
-        Constants.FlickrParameterKeys.BoundingBox: bboxString(),
+        Constants.FlickrParameterKeys.BoundingBox: "0,0,0,0",
         Constants.FlickrParameterKeys.SafeSearch: Constants.FlickrParameterValues.UseSafeSearch,
         Constants.FlickrParameterKeys.Extras: Constants.FlickrParameterValues.MediumURL,
         Constants.FlickrParameterKeys.Format: Constants.FlickrParameterValues.ResponseFormat,
@@ -21,13 +21,13 @@ class FlickrClient: NSObject {
     ]
 
     
-    private func bboxString() -> String {
-        let minimumLon = max(longitude - Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.0)
-        let minimumLat = max(latitude - Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.0)
-        let maximumLon = min(longitude + Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.1)
-        let maximumLat = min(latitude + Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.1)
-        return "\(minimumLon),\(minimumLat),\(maximumLon),\(maximumLat)"
-    }
+//    private func bboxString() -> String {
+//        let minimumLon = max(longitude - Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.0)
+//        let minimumLat = max(latitude - Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.0)
+//        let maximumLon = min(longitude + Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.1)
+//        let maximumLat = min(latitude + Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.1)
+//        return "\(minimumLon),\(minimumLat),\(maximumLon),\(maximumLat)"
+//    }
     
     // MARK: Flickr API
     
@@ -43,11 +43,6 @@ class FlickrClient: NSObject {
             // if an error occurs, print it and re-enable the UI
             func displayError(_ error: String) {
                 print(error)
-                performUIUpdatesOnMain {
-                    self.setUIEnabled(true)
-                    self.photoTitleLabel.text = "No photo returned. Try again."
-                    self.photoImageView.image = nil
-                }
             }
             
             /* GUARD: Was there an error? */
@@ -101,7 +96,7 @@ class FlickrClient: NSObject {
             } else {
                 let randomPhotoIndex = Int(arc4random_uniform(UInt32(photosArray.count)))
                 let photoDictionary = photosArray[randomPhotoIndex] as [String: AnyObject]
-                let photoTitle = photoDictionary[Constants.FlickrResponseKeys.Title] as? String
+                //let photoTitle = photoDictionary[Constants.FlickrResponseKeys.Title] as? String
                 
                 /* GUARD: Does our photo have a key for 'url_m'? */
                 guard let imageUrlString = photoDictionary[Constants.FlickrResponseKeys.MediumURL] as? String else {
@@ -113,9 +108,7 @@ class FlickrClient: NSObject {
                 let imageURL = URL(string: imageUrlString)
                 if let imageData = try? Data(contentsOf: imageURL!) {
                     performUIUpdatesOnMain {
-                        self.setUIEnabled(true)
-                        self.photoImageView.image = UIImage(data: imageData)
-                        self.photoTitleLabel.text = photoTitle ?? "(Untitled)"
+                        //Mark: Image returned
                     }
                 } else {
                     displayError("Image does not exist at \(imageURL)")
@@ -132,6 +125,22 @@ class FlickrClient: NSObject {
 
     
     // MARK: Helpers
+    // MARK: Helper for Creating a URL from Parameters
+    
+    private func flickrURLFromParameters(_ parameters: [String:AnyObject]) -> URL {
+        
+        var components = URLComponents()
+        components.scheme = Constants.Flickr.APIScheme
+        components.host = Constants.Flickr.APIHost
+        components.path = Constants.Flickr.APIPath
+        components.queryItems = [URLQueryItem]()
+        
+        for (key, value) in parameters {
+            let queryItem = URLQueryItem(name: key, value: "\(value)")
+            components.queryItems!.append(queryItem)
+        }
+        return components.url!
+    }
     
     // given raw JSON, return a usable Foundation object
     private func convertDataWithCompletionHandler(_ data: Data, completionHandlerForConvertData: (_ result: AnyObject?, _ error: NSError?) -> Void) {

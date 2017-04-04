@@ -15,16 +15,34 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var editButton: UIBarButtonItem!
     
+    @IBOutlet weak var editModeLabel: UILabel!
     var pins = [Pin]()
+    var isEditMode = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
         mapView.delegate = self
-        let holdTouch = UILongPressGestureRecognizer(target: self, action: #selector(dropPin(gestureRecognizer:)))
-        holdTouch.minimumPressDuration = 1.0
-        mapView.addGestureRecognizer(holdTouch)
+        editModeLabel.isHidden = true
+        let longPressed = UILongPressGestureRecognizer(target: self, action: #selector(dropPin(gestureRecognizer:)))
+        longPressed.minimumPressDuration = 1.0
+        mapView.addGestureRecognizer(longPressed)
         fetchPinLocations()
     }
+    
+    @IBAction func editMode(_ sender: Any) {
+        isEditMode = !isEditMode
+        
+        if isEditMode {
+            editButton.title = "Done"
+            mapView.frame.origin.y -= 40
+            editModeLabel.isHidden = false
+        }else {
+            editButton.title = "Edit"
+            mapView.frame.origin.y = 0
+            editModeLabel.isHidden = true
+        }
+    }
+    
     
     func dropPin(gestureRecognizer:UILongPressGestureRecognizer){
         
@@ -50,6 +68,7 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
         CoreDataStack.saveContext()
         
         self.pins.append(pin)
+        print(pins)
     }
     
     func fetchPinLocations(){
@@ -66,6 +85,7 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
                 let annotation = MKPointAnnotation()
                 annotation.coordinate = coordinate
                 annotations.append(annotation)
+                
             }
             self.mapView.addAnnotations(annotations)
             print("fetched pins to the map view.")
@@ -83,7 +103,7 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
         
         if pinView == nil {
             pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
-            pinView!.canShowCallout = true
+            pinView!.canShowCallout = false
             pinView!.pinTintColor = .red
             pinView!.rightCalloutAccessoryView = UIButton(type: .detailDisclosure)
         }
@@ -96,28 +116,41 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         print("Pin Tapped")
-    }
-    
-    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-        if control == view.rightCalloutAccessoryView {
-            performSegue(withIdentifier: "PhotoAlbumView", sender: view)
+        mapView.deselectAnnotation(view.annotation, animated: true)
+        
+        if isEditMode {
+            let lat = view.annotation?.coordinate.latitude
+            let lon = view.annotation?.coordinate.longitude
+            print("selected pin lat:\(lat) lon:\(lon)")
+            //Q: How to delete the pin?
+            // pins array is empty.
+            for pin in pins {
+                if pin.latitude == lat!, pin.longitude == lon! {
+                    print("found pin info")
+                }
+            }
+        } else {
+        print("segue to the photo album")
+        //Q: PerformSeque to the photoAlbumView
+        //performSegue(withIdentifier: "PhotoAlbumView", sender: self)
+            
         }
-
     }
     
-//    func removePin(gesture: UIGestureRecognizer) {
-//        
-//        if gesture.state == UIGestureRecognizerState.ended {
-//            
-//            CoreDataStack.getContext().delete(selectedPin)
-//            print("Annotation Removed")
-//        }
-//    }
-
-    private func presentPhotoAlbumView() {
-        let controller = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhotoAlbumView")
-        self.present(controller, animated: true, completion: nil)
+    func removePin(gesture: UIGestureRecognizer) {
+        
+        if gesture.state == UIGestureRecognizerState.ended {
+            
+            //CoreDataStack.getContext().delete(selectedPin)
+            print("Pin Removed")
+        }
     }
+    
+    
+//    private func presentPhotoAlbumView() {
+//        let controller = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhotoAlbumView")
+//        self.present(controller, animated: true, completion: nil)
+//    }
     
 
 
