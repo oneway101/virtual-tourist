@@ -16,17 +16,19 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
     @IBOutlet weak var editButton: UIBarButtonItem!
     
     @IBOutlet weak var editModeLabel: UILabel!
-    var pins = [Pin]()
+    //var pins = [Pin]()
     var isEditMode = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         mapView.delegate = self
         editModeLabel.isHidden = true
         let longPressed = UILongPressGestureRecognizer(target: self, action: #selector(dropPin(gestureRecognizer:)))
         longPressed.minimumPressDuration = 1.0
         mapView.addGestureRecognizer(longPressed)
-        fetchPinLocations()
+        //fetchPinLocations()
+        loadAnnotations()
     }
     
     @IBAction func editMode(_ sender: Any) {
@@ -51,32 +53,31 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
             let newCoordinates = mapView.convert(location, toCoordinateFrom: mapView)
             let annotation = MKPointAnnotation()
             annotation.coordinate = newCoordinates
-            print("**annotation**")
-            print(annotation.coordinate)
+            print("new pin dropped. lat:\(annotation.coordinate.latitude), lat:\(annotation.coordinate.latitude)")
             savePinLocations(lat: annotation.coordinate.latitude, lon: annotation.coordinate.longitude)
             performUIUpdatesOnMain {
-                self.fetchPinLocations()
+                self.loadAnnotations()
             }
         }
     }
     
     func savePinLocations(lat:Double,lon:Double){
-        let context = CoreDataStack.persistentContainer.viewContext
+        let context = CoreDataStack.getContext()
         let pin:Pin = NSEntityDescription.insertNewObject(forEntityName: "Pin", into: context ) as! Pin
         pin.latitude = lat
         pin.longitude = lon
         CoreDataStack.saveContext()
         
-        self.pins.append(pin)
-        print(pins)
+        //self.pins.append(pin)
+        //print(pins)
     }
     
-    func fetchPinLocations(){
+    func loadAnnotations(){
         let fetchRequest:NSFetchRequest<Pin> = Pin.fetchRequest()
         
         do {
-            let searchResults = try CoreDataStack.getContext()
-            print("number of results: \(searchResults.count)")
+            let searchResults = try CoreDataStack.getContext().fetch(fetchRequest)
+            print("number of locations: \(searchResults.count)")
             var annotations = [MKPointAnnotation]()
             for result in searchResults as [Pin]{
                 let lat = CLLocationDegrees(result.latitude)
@@ -85,11 +86,12 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
                 let annotation = MKPointAnnotation()
                 annotation.coordinate = coordinate
                 annotations.append(annotation)
-                pins.append(result)
-                
+                //pins.append(result)
             }
-            self.mapView.addAnnotations(annotations)
-            print("fetched pins to the map view.")
+            performUIUpdatesOnMain {
+                self.mapView.addAnnotations(annotations)
+                print("annotations added to the map view.")
+            }
         }
         catch {
             print("Error: \(error)")
@@ -119,40 +121,37 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
         mapView.deselectAnnotation(view.annotation, animated: true)
         let lat = view.annotation?.coordinate.latitude
         let lon = view.annotation?.coordinate.longitude
-        print("selected pin lat:\(lat) lon:\(lon)")
-        for pin in pins {
-            if pin.latitude == lat!, pin.longitude == lon! {
-                let selectedPin = pin
-                print("found pin info")
-                if isEditMode {
-                    //Delete selectedPin
-                    
-                } else {
-                    print("segue to the photo album")
-                    //Q: PerformSeque to the photoAlbumView
-                    performSegue(withIdentifier: "PhotoAlbumView", sender: selectedPin)
-                    
+        print("selected pin's lat:\(lat), lon:\(lon)")
+        let fetchRequest:NSFetchRequest<Pin> = Pin.fetchRequest()
+        do {
+            let searchResults = try CoreDataStack.getContext().fetch(fetchRequest)
+            for pin in searchResults as [Pin] {
+                if pin.latitude == lat!, pin.longitude == lon! {
+                    let selectedPin = pin
+                    print("found pin info")
+                    if isEditMode {
+                        //Delete selectedPin
+                        performUIUpdatesOnMain {
+                            //fetchRequest.predicate = NSPredicate(format: "longitude == %@", "Pins")
+                            CoreDataStack.getContext().delete(selectedPin)
+                            CoreDataStack.saveContext()
+                            self.mapView.removeAnnotation(view.annotation!)
+                        }
+                        print("Deleted the selected pin")
+                    } else {
+                        print("segue to the photo album")
+                        //Q: PerformSeque to the photoAlbumView
+                        performUIUpdatesOnMain {
+                            self.performSegue(withIdentifier: "PhotoAlbumView", sender: selectedPin)
+                        }
+                    }
                 }
             }
+        }catch {
+            print("Error: \(error)")
         }
         
-    }
-    
-    func removePin(gesture: UIGestureRecognizer) {
-        
-        if gesture.state == UIGestureRecognizerState.ended {
-            
-            //CoreDataStack.getContext().delete(selectedPin)
-            print("Pin Removed")
-        }
-    }
-    
-    
-//    private func presentPhotoAlbumView() {
-//        let controller = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhotoAlbumView")
-//        self.present(controller, animated: true, completion: nil)
-//    }
-    
+    }    
 
 
 }
