@@ -15,7 +15,6 @@ class PhotoAlbumViewController: UICollectionViewController, MKMapViewDelegate {
     
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var photoCollectionView: UICollectionView!
-    
     @IBOutlet weak var newCollectionButton: UIButton!
 
     override func viewDidLoad() {
@@ -26,8 +25,8 @@ class PhotoAlbumViewController: UICollectionViewController, MKMapViewDelegate {
 
         // Register cell classes
         self.collectionView!.register(UICollectionViewCell.self, forCellWithReuseIdentifier: reuseIdentifier)
-
-        // Do any additional setup after loading the view.
+        let selectedPinLocation = bboxString(longitude: 47, latitude: 47)
+        FlickrClient.sharedInstance.getImagesFromFlickr(selectedPinLocation)
     }
 
     override func didReceiveMemoryWarning() {
@@ -44,6 +43,15 @@ class PhotoAlbumViewController: UICollectionViewController, MKMapViewDelegate {
         // Pass the selected object to the new view controller.
     }
     */
+    
+    
+    func bboxString(longitude:Double, latitude:Double) -> String {
+        let minimumLon = max(longitude - Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.0)
+        let minimumLat = max(latitude - Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.0)
+        let maximumLon = min(longitude + Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.1)
+        let maximumLat = min(latitude + Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.1)
+        return "\(minimumLon),\(minimumLat),\(maximumLon),\(maximumLat)"
+    }
 
     // MARK: UICollectionViewDataSource
 
