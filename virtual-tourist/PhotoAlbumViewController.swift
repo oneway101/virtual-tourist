@@ -20,7 +20,7 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     
     var selectedPin:Pin!
     var selectedPinLocation:String!
-    var photoArray:[UIImage]!
+    var photosArray:[UIImage]!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -33,16 +33,22 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         //let selectedPinLocation = bboxString(longitude: selectedPin.longitude, latitude: selectedPin.latitude)
         print(selectedPinLocation)
         
-        FlickrClient.sharedInstance.getImagesFromFlickr(selectedPinLocation) { (photo, error) in
-//            if (error != nil){
-//                print(error?.localizedDescription)
-//            }
-//            else{
-//                let photo = UIImageView(image:photo)
-//                print(photo)
-//                print("photo added.")
-//            }
-            print("getImagesFromFlicker")
+        FlickrClient.sharedInstance.getImagesFromFlickr(selectedPinLocation) { (results, error) in
+            guard error == nil else {
+                print(error)
+                return
+            }
+            if let photosArray = results {
+                
+                if photosArray.count == 0 {
+                    print("No photos in photosArray.")
+                    return
+                }
+                print("\(photosArray.count) photos in phtosArray.")
+                for photo in photosArray {
+                    print(photo)
+                }
+            }
         }
         //getPhotos()
 
@@ -74,13 +80,13 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
 
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return photoArray.count
+        return photosArray.count
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoAlbumCell
         //Q:photo array
-        let image = photoArray[(indexPath as NSIndexPath).row]
+        let image = photosArray[(indexPath as NSIndexPath).row]
         cell.photoImageView = UIImageView(image:image)
     
         return cell

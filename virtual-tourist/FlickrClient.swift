@@ -12,10 +12,11 @@ import CoreData
 class FlickrClient: NSObject {
     
     static let sharedInstance = FlickrClient()
+    var session = URLSession.shared
     
     // MARK: Flickr API
     
-    func getImagesFromFlickr(_ bbox: String, _ completionHandler: @escaping (_ result: [Photo]?, _ error: NSError?) -> Void) {
+    func getImagesFromFlickr(_ bbox: String, _ completionHandler: @escaping (_ result: [[String:AnyObject]]?, _ error: NSError?) -> Void) {
         
         let methodParameters: [String:String] = [
             Constants.FlickrParameterKeys.Method: Constants.FlickrParameterValues.SearchMethod,
@@ -27,15 +28,55 @@ class FlickrClient: NSObject {
             Constants.FlickrParameterKeys.NoJSONCallback: Constants.FlickrParameterValues.DisableJSONCallback
         ]
         // create session and request
-        let session = URLSession.shared
+        
         let request = URLRequest(url: flickrURLFromParameters(methodParameters))
         
+        let task = taskForGETMethod(request: request) { (parsedResult, error) in
+            
+            // display error
+            func displayError(_ error: String) {
+                let userInfo = [NSLocalizedDescriptionKey : error]
+                completionHandler(nil, NSError(domain: "taskForGETMethod", code: 1, userInfo: userInfo))
+            }
+            
+            /* GUARD: Did Flickr return an error (stat != ok)? */
+            guard let stat = parsedResult?[Constants.FlickrResponseKeys.Status] as? String, stat == Constants.FlickrResponseValues.OKStatus else {
+                displayError("Flickr API returned an error. See error code and message in \(parsedResult)")
+                return
+            }
+            
+            /* GUARD: Is the "photos" key in our result? */
+            guard let photosDictionary = parsedResult?[Constants.FlickrResponseKeys.Photos] as? [String:AnyObject] else {
+                displayError("Cannot find key '\(Constants.FlickrResponseKeys.Photos)' in \(parsedResult)")
+                return
+            }
+            
+            /* GUARD: Is the "photo" key in photosDictionary? */
+            guard let photosArray = photosDictionary[Constants.FlickrResponseKeys.Photo] as? [[String: AnyObject]] else {
+                displayError("Cannot find key '\(Constants.FlickrResponseKeys.Photo)' in \(photosDictionary)")
+                return
+            }
+            
+            completionHandler(photosArray, nil)
+            
+        }
+        
+        // start the task!
+        task.resume()
+    }
+    
+    // MARK: Helpers
+    
+    // MARK: GETMethod
+    private func taskForGETMethod(request:URLRequest, _ completionHandlerForGET: @escaping(_ result: AnyObject?, _ error: NSError?) -> Void)-> URLSessionDataTask {
         // create network request
         let task = session.dataTask(with: request) { (data, response, error) in
             
-            // if an error occurs, print it and re-enable the UI
+            // display error
             func displayError(_ error: String) {
                 print(error)
+                let userInfo = [NSLocalizedDescriptionKey : error]
+                completionHandlerForGET(nil, NSError(domain: "taskForGETMethod", code: 1, userInfo: userInfo))
             }
             
             /* GUARD: Was there an error? */
@@ -56,76 +97,13 @@ class FlickrClient: NSObject {
                 return
             }
             
-            // parse the data
-            let parsedResult: [String:AnyObject]!
-            do {
-                parsedResult = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as! [String:AnyObject]
-            } catch {
-                displayError("Could not parse the data as JSON: '\(data)'")
-                return
-            }
-            
-            /* GUARD: Did Flickr return an error (stat != ok)? */
-            guard let stat = parsedResult[Constants.FlickrResponseKeys.Status] as? String, stat == Constants.FlickrResponseValues.OKStatus else {
-                displayError("Flickr API returned an error. See error code and message in \(parsedResult)")
-                return
-            }
-            
-            /* GUARD: Is the "photos" key in our result? */
-            guard let photosDictionary = parsedResult[Constants.FlickrResponseKeys.Photos] as? [String:AnyObject] else {
-                displayError("Cannot find key '\(Constants.FlickrResponseKeys.Photos)' in \(parsedResult)")
-                return
-            }
-            
-            /* GUARD: Is the "photo" key in photosDictionary? */
-            guard let photosArray = photosDictionary[Constants.FlickrResponseKeys.Photo] as? [[String: AnyObject]] else {
-                displayError("Cannot find key '\(Constants.FlickrResponseKeys.Photo)' in \(photosDictionary)")
-                return
-            }
-            
-            if photosArray.count == 0 {
-                displayError("No Photos Found. Search Again.")
-                return
-            } else {
-                for photo in photosArray{
-                    //let randomPhotoIndex = Int(arc4random_uniform(UInt32(photosArray.count)))
-                    //let photoDictionary = photosArray[randomPhotoIndex] as [String: AnyObject]
-
-                    /* GUARD: Does our photo have a key for 'url_m'? */
-                    guard let imageUrlString = photo[Constants.FlickrResponseKeys.MediumURL] as? String else {
-                        displayError("Cannot find key '\(Constants.FlickrResponseKeys.MediumURL)' in \(photo)")
-                        return
-                    }
-                    let imageURL = URL(string: imageUrlString)!
-                    if let imageData = try? Data(contentsOf: imageURL) {
-                        let image = UIImage(data: imageData)!
-                        //photoArray.append(image)
-                    } else {
-                        print("Image does not exist at \(imageURL)")
-                    }
-                    
-                    // save image url string to CoreData
-//                    let context = CoreDataStack.getContext()
-//                    let image:Photo = NSEntityDescription.insertNewObject(forEntityName: "Photo", into: context ) as! Photo
-//                    image.imageString = imageUrlString
-//                    CoreDataStack.saveContext()
-        
-                }//photosArray for loop - Saved to CoreData
-                
-                //Q:What should I pass to the completion handler?
-                //completionHandler([Photo], nil)
-            }
+            self.convertDataWithCompletionHandler(data, completionHandlerForConvertData: completionHandlerForGET)
         }
         
-        // start the task!
         task.resume()
+        return task
     }
 
-    
-
-
-    
-    // MARK: Helpers
     // MARK: Helper for Creating a URL from Parameters
     
     private func flickrURLFromParameters(_ parameters: [String:String]) -> URL {
