@@ -8,15 +8,20 @@
 
 import UIKit
 import MapKit
+import CoreData
 
 private let reuseIdentifier = "Cell"
 
-class PhotoAlbumViewController: UICollectionViewController, MKMapViewDelegate {
+class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, MKMapViewDelegate {
     
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var photoCollectionView: UICollectionView!
     @IBOutlet weak var newCollectionButton: UIButton!
-
+    
+    var selectedPin:Pin!
+    var selectedPinLocation:String!
+    var photoArray:[UIImage]!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -24,52 +29,59 @@ class PhotoAlbumViewController: UICollectionViewController, MKMapViewDelegate {
         // self.clearsSelectionOnViewWillAppear = false
 
         // Register cell classes
-        self.collectionView!.register(UICollectionViewCell.self, forCellWithReuseIdentifier: reuseIdentifier)
-        let selectedPinLocation = bboxString(longitude: 47, latitude: 47)
-        FlickrClient.sharedInstance.getImagesFromFlickr(selectedPinLocation)
-    }
+        photoCollectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: reuseIdentifier)
+        //let selectedPinLocation = bboxString(longitude: selectedPin.longitude, latitude: selectedPin.latitude)
+        print(selectedPinLocation)
+        
+        FlickrClient.sharedInstance.getImagesFromFlickr(selectedPinLocation) { (photo, error) in
+//            if (error != nil){
+//                print(error?.localizedDescription)
+//            }
+//            else{
+//                let photo = UIImageView(image:photo)
+//                print(photo)
+//                print("photo added.")
+//            }
+            print("getImagesFromFlicker")
+        }
+        //getPhotos()
 
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
     }
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using [segue destinationViewController].
-        // Pass the selected object to the new view controller.
-    }
-    */
     
+//    func getPhotos(){
+//        let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
+//        do {
+//            let searchResults = try CoreDataStack.getContext().fetch(fetchRequest)
+//            print("number of photos: \(searchResults.count)")
+//            
+//            for result in searchResults as [Photo]{
+//                let imageURL = URL(string: result.imageString!)!
+//                if let imageData = try? Data(contentsOf: imageURL) {
+//                    let image = UIImage(data: imageData)!
+//                    photoArray.append(image)
+//                } else {
+//                    print("Image does not exist at \(imageURL)")
+//                }
+//            }
+//        }
+//        catch {
+//            print("Error: \(error)")
+//        }
+//    }
     
-    func bboxString(longitude:Double, latitude:Double) -> String {
-        let minimumLon = max(longitude - Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.0)
-        let minimumLat = max(latitude - Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.0)
-        let maximumLon = min(longitude + Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.1)
-        let maximumLat = min(latitude + Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.1)
-        return "\(minimumLon),\(minimumLat),\(maximumLon),\(maximumLat)"
-    }
 
     // MARK: UICollectionViewDataSource
 
-    override func numberOfSections(in collectionView: UICollectionView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        return 0
+
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return photoArray.count
     }
 
-
-    override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of items
-        return 0
-    }
-
-    override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath)
-    
-        // Configure the cell
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoAlbumCell
+        //Q:photo array
+        let image = photoArray[(indexPath as NSIndexPath).row]
+        cell.photoImageView = UIImageView(image:image)
     
         return cell
     }

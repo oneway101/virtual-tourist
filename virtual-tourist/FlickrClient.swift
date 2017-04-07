@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import CoreData
 
 class FlickrClient: NSObject {
     
@@ -14,12 +15,12 @@ class FlickrClient: NSObject {
     
     // MARK: Flickr API
     
-    func getImagesFromFlickr(_ bbox: String) {
+    func getImagesFromFlickr(_ bbox: String, _ completionHandler: @escaping (_ result: [Photo]?, _ error: NSError?) -> Void) {
         
         let methodParameters: [String:String] = [
             Constants.FlickrParameterKeys.Method: Constants.FlickrParameterValues.SearchMethod,
             Constants.FlickrParameterKeys.APIKey: Constants.FlickrParameterValues.APIKey,
-            Constants.FlickrParameterKeys.BoundingBox: "0,0,0,0",
+            Constants.FlickrParameterKeys.BoundingBox: bbox,
             Constants.FlickrParameterKeys.SafeSearch: Constants.FlickrParameterValues.UseSafeSearch,
             Constants.FlickrParameterKeys.Extras: Constants.FlickrParameterValues.MediumURL,
             Constants.FlickrParameterKeys.Format: Constants.FlickrParameterValues.ResponseFormat,
@@ -86,25 +87,33 @@ class FlickrClient: NSObject {
                 displayError("No Photos Found. Search Again.")
                 return
             } else {
-                let randomPhotoIndex = Int(arc4random_uniform(UInt32(photosArray.count)))
-                let photoDictionary = photosArray[randomPhotoIndex] as [String: AnyObject]
-                //let photoTitle = photoDictionary[Constants.FlickrResponseKeys.Title] as? String
-                
-                /* GUARD: Does our photo have a key for 'url_m'? */
-                guard let imageUrlString = photoDictionary[Constants.FlickrResponseKeys.MediumURL] as? String else {
-                    displayError("Cannot find key '\(Constants.FlickrResponseKeys.MediumURL)' in \(photoDictionary)")
-                    return
-                }
-                
-                // if an image exists at the url, set the image and title
-                let imageURL = URL(string: imageUrlString)
-                if let imageData = try? Data(contentsOf: imageURL!) {
-                    performUIUpdatesOnMain {
-                        //Mark: Image returned
+                for photo in photosArray{
+                    //let randomPhotoIndex = Int(arc4random_uniform(UInt32(photosArray.count)))
+                    //let photoDictionary = photosArray[randomPhotoIndex] as [String: AnyObject]
+
+                    /* GUARD: Does our photo have a key for 'url_m'? */
+                    guard let imageUrlString = photo[Constants.FlickrResponseKeys.MediumURL] as? String else {
+                        displayError("Cannot find key '\(Constants.FlickrResponseKeys.MediumURL)' in \(photo)")
+                        return
                     }
-                } else {
-                    displayError("Image does not exist at \(imageURL)")
-                }
+                    let imageURL = URL(string: imageUrlString)!
+                    if let imageData = try? Data(contentsOf: imageURL) {
+                        let image = UIImage(data: imageData)!
+                        //photoArray.append(image)
+                    } else {
+                        print("Image does not exist at \(imageURL)")
+                    }
+                    
+                    // save image url string to CoreData
+//                    let context = CoreDataStack.getContext()
+//                    let image:Photo = NSEntityDescription.insertNewObject(forEntityName: "Photo", into: context ) as! Photo
+//                    image.imageString = imageUrlString
+//                    CoreDataStack.saveContext()
+        
+                }//photosArray for loop - Saved to CoreData
+                
+                //Q:What should I pass to the completion handler?
+                //completionHandler([Photo], nil)
             }
         }
         

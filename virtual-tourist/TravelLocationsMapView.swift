@@ -14,9 +14,8 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
     
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var editButton: UIBarButtonItem!
-    
     @IBOutlet weak var editModeLabel: UILabel!
-    //var pins = [Pin]()
+    
     var isEditMode = false
     
     override func viewDidLoad() {
@@ -27,7 +26,6 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
         let longPressed = UILongPressGestureRecognizer(target: self, action: #selector(dropPin(gestureRecognizer:)))
         longPressed.minimumPressDuration = 1.0
         mapView.addGestureRecognizer(longPressed)
-        //fetchPinLocations()
         loadAnnotations()
     }
     
@@ -44,7 +42,6 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
             editModeLabel.isHidden = true
         }
     }
-    
     
     func dropPin(gestureRecognizer:UILongPressGestureRecognizer){
         
@@ -67,9 +64,6 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
         pin.latitude = lat
         pin.longitude = lon
         CoreDataStack.saveContext()
-        
-        //self.pins.append(pin)
-        //print(pins)
     }
     
     func loadAnnotations(){
@@ -128,7 +122,7 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
             for pin in searchResults as [Pin] {
                 if pin.latitude == lat!, pin.longitude == lon! {
                     let selectedPin = pin
-                    print("found pin info")
+                    print("Found pin info.")
                     if isEditMode {
                         //Delete selectedPin
                         performUIUpdatesOnMain {
@@ -136,11 +130,11 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
                             CoreDataStack.getContext().delete(selectedPin)
                             CoreDataStack.saveContext()
                             self.mapView.removeAnnotation(view.annotation!)
+                            print("Deleted the selected pin.")
                         }
-                        print("Deleted the selected pin")
                     } else {
-                        print("segue to the photo album")
-                        //Q: PerformSeque to the photoAlbumView
+                        //Perform segue to the photo album
+                        print("Perform segue to the photo album.")
                         performUIUpdatesOnMain {
                             self.performSegue(withIdentifier: "PhotoAlbumView", sender: selectedPin)
                         }
@@ -151,7 +145,23 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
             print("Error: \(error)")
         }
         
-    }    
+    }
+    
+    func bboxString(longitude:Double, latitude:Double) -> String {
+        let minimumLon = max(longitude - Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.0)
+        let minimumLat = max(latitude - Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.0)
+        let maximumLon = min(longitude + Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.1)
+        let maximumLat = min(latitude + Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.1)
+        return "\(minimumLon),\(minimumLat),\(maximumLon),\(maximumLat)"
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "PhotoAlbumView" {
+            let controller = segue.destination as! PhotoAlbumViewController
+            let selectedPin = sender as! Pin
+            controller.selectedPinLocation = bboxString(longitude:selectedPin.longitude , latitude: selectedPin.latitude)
+        }
+    }
 
 
 }

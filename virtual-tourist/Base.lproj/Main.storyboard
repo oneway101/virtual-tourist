@@ -6,7 +6,6 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
-        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -77,12 +76,6 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="top" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="cn0-k6-Maw">
-                                <rect key="frame" x="0.0" y="72" width="375" height="200"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="200" id="MJk-bB-PB9"/>
-                                </constraints>
-                            </mapView>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="vaF-0W-sp8">
                                 <rect key="frame" x="0.0" y="272" width="375" height="395"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -119,17 +112,21 @@
                                 </constraints>
                                 <state key="normal" title="New Collection"/>
                             </button>
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="top" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="cn0-k6-Maw">
+                                <rect key="frame" x="0.0" y="64" width="375" height="200"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="200" id="MJk-bB-PB9"/>
+                                </constraints>
+                            </mapView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="cn0-k6-Maw" firstAttribute="leading" secondItem="RuM-vG-86D" secondAttribute="leadingMargin" constant="-16" id="2Bk-c9-XJP"/>
-                            <constraint firstItem="vaF-0W-sp8" firstAttribute="top" secondItem="cn0-k6-Maw" secondAttribute="bottom" id="2NH-a2-mCM"/>
+                            <constraint firstItem="vaF-0W-sp8" firstAttribute="top" secondItem="cn0-k6-Maw" secondAttribute="bottom" constant="8" id="2NH-a2-mCM"/>
                             <constraint firstItem="gpP-D2-hgH" firstAttribute="top" secondItem="jC5-d5-WSV" secondAttribute="bottom" id="3Z8-gd-ksz"/>
-                            <constraint firstAttribute="trailing" secondItem="vaF-0W-sp8" secondAttribute="trailing" id="5CZ-Cc-Qo7"/>
                             <constraint firstItem="jC5-d5-WSV" firstAttribute="leading" secondItem="RuM-vG-86D" secondAttribute="leading" id="NSW-Dy-2fR"/>
+                            <constraint firstItem="cn0-k6-Maw" firstAttribute="leading" secondItem="RuM-vG-86D" secondAttribute="leading" id="Oli-18-eW3"/>
                             <constraint firstAttribute="trailing" secondItem="jC5-d5-WSV" secondAttribute="trailing" id="PJe-G6-q9k"/>
-                            <constraint firstItem="cn0-k6-Maw" firstAttribute="top" secondItem="tPp-DG-Vi5" secondAttribute="bottom" constant="8" id="UU2-bi-w3D"/>
-                            <constraint firstAttribute="trailingMargin" secondItem="cn0-k6-Maw" secondAttribute="trailing" constant="-16" id="WKP-E5-8G0"/>
+                            <constraint firstItem="cn0-k6-Maw" firstAttribute="top" secondItem="tPp-DG-Vi5" secondAttribute="bottom" id="UU2-bi-w3D"/>
                             <constraint firstItem="vaF-0W-sp8" firstAttribute="width" secondItem="cn0-k6-Maw" secondAttribute="width" id="ZxC-Xd-9gY"/>
                             <constraint firstItem="jC5-d5-WSV" firstAttribute="width" secondItem="vaF-0W-sp8" secondAttribute="width" id="lZf-HI-BaZ"/>
                             <constraint firstItem="vaF-0W-sp8" firstAttribute="leading" secondItem="RuM-vG-86D" secondAttribute="leading" id="oZA-pK-Zdb"/>

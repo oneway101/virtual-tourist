@@ -2,7 +2,7 @@
 //  Pin+CoreDataProperties.swift
 //  virtual-tourist
 //
-//  Created by Ha Na Gill on 3/29/17.
+//  Created by Ha Na Gill on 4/7/17.
 //  Copyright © 2017 Ha Na Gill. All rights reserved.
 //
 
