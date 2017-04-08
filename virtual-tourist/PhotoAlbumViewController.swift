@@ -20,7 +20,7 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     
     var selectedPin:Pin!
     var selectedPinLocation:String!
-    var photosArray:[UIImage]!
+    var photosCollection:[URL]!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -46,7 +46,14 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
                 }
                 print("\(photosArray.count) photos in phtosArray.")
                 for photo in photosArray {
-                    print(photo)
+                    
+                    guard let imageUrlString = photo[Constants.FlickrResponseKeys.MediumURL] as? String else {
+                        print("Cannot find key '\(Constants.FlickrResponseKeys.MediumURL)' in \(photosArray)")
+                        return
+                    }
+                    if let imageUrl = URL(string: imageUrlString) {
+                        self.photosCollection.append(imageUrl)
+                    }
                 }
             }
         }
@@ -80,15 +87,18 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
 
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return photosArray.count
+        return photosCollection.count
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoAlbumCell
-        //Q:photo array
-        let image = photosArray[(indexPath as NSIndexPath).row]
-        cell.photoImageView = UIImageView(image:image)
-    
+        for url in photosCollection {
+            //let imageURL = URL(string: urlString)!
+            if let imageData = try? Data(contentsOf: url) {
+                let uiImage = UIImage(data: imageData)!
+                cell.photoImageView = UIImageView(image:uiImage)
+            }
+        }
         return cell
     }
 
