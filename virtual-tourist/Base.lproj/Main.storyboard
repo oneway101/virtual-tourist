@@ -111,6 +111,9 @@
                                     <constraint firstAttribute="height" constant="50" id="6hM-uF-Nlb"/>
                                 </constraints>
                                 <state key="normal" title="New Collection"/>
+                                <connections>
+                                    <action selector="newCollection:" destination="0Dw-j4-XzY" eventType="touchUpInside" id="XeY-Lx-Cn2"/>
+                                </connections>
                             </button>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="top" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="cn0-k6-Maw">
                                 <rect key="frame" x="0.0" y="64" width="375" height="200"/>

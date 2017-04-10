@@ -20,7 +20,7 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     
     var selectedPin:Pin!
     var selectedPinLocation:String!
-    var photosCollection:[URL]!
+    var imageUrls:[URL]!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,7 +32,10 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         photoCollectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: reuseIdentifier)
         //let selectedPinLocation = bboxString(longitude: selectedPin.longitude, latitude: selectedPin.latitude)
         print(selectedPinLocation)
-        
+        getPhotos()
+    }
+    
+    func getPhotos(){
         FlickrClient.sharedInstance.getImagesFromFlickr(selectedPinLocation) { (results, error) in
             guard error == nil else {
                 print(error)
@@ -52,52 +55,34 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
                         return
                     }
                     if let imageUrl = URL(string: imageUrlString) {
-                        self.photosCollection.append(imageUrl)
+                        self.imageUrls.append(imageUrl)
                     }
                 }
             }
         }
-        //getPhotos()
-
     }
-    
-//    func getPhotos(){
-//        let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
-//        do {
-//            let searchResults = try CoreDataStack.getContext().fetch(fetchRequest)
-//            print("number of photos: \(searchResults.count)")
-//            
-//            for result in searchResults as [Photo]{
-//                let imageURL = URL(string: result.imageString!)!
-//                if let imageData = try? Data(contentsOf: imageURL) {
-//                    let image = UIImage(data: imageData)!
-//                    photoArray.append(image)
-//                } else {
-//                    print("Image does not exist at \(imageURL)")
-//                }
-//            }
-//        }
-//        catch {
-//            print("Error: \(error)")
-//        }
-//    }
-    
+
+    @IBAction func newCollection(_ sender: Any) {
+        
+    }
 
     // MARK: UICollectionViewDataSource
 
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return photosCollection.count
+        return 12
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoAlbumCell
-        for url in photosCollection {
-            //let imageURL = URL(string: urlString)!
-            if let imageData = try? Data(contentsOf: url) {
-                let uiImage = UIImage(data: imageData)!
-                cell.photoImageView = UIImageView(image:uiImage)
-            }
+        
+        for url in imageUrls {
+            let context = CoreDataStack.getContext()
+            let photo:Photo = NSEntityDescription.insertNewObject(forEntityName: "Photo", into: context ) as! Photo
+            let downloadedImage = cell.photoImageView.downloadedFrom(url: url)
+            photo.imageString = downloadedImage
+            CoreDataStack.saveContext()
+
         }
         return cell
     }
@@ -133,4 +118,25 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     }
     */
 
+}
+
+extension UIImageView {
+    func downloadedFrom(url: URL, contentMode mode: UIViewContentMode = .scaleAspectFit) {
+        contentMode = mode
+        URLSession.shared.dataTask(with: url) { (data, response, error) in
+            guard
+                let httpURLResponse = response as? HTTPURLResponse, httpURLResponse.statusCode == 200,
+                let mimeType = response?.mimeType, mimeType.hasPrefix("image"),
+                let data = data, error == nil,
+                let image = UIImage(data: data)
+                else { return }
+            DispatchQueue.main.async() { () -> Void in
+                self.image = image
+            }
+            }.resume()
+    }
+    func downloadedFrom(link: String, contentMode mode: UIViewContentMode = .scaleAspectFit) {
+        guard let url = URL(string: link) else { return }
+        downloadedFrom(url: url, contentMode: mode)
+    }
 }
