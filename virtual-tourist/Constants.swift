@@ -35,6 +35,7 @@ struct Constants {
         static let SafeSearch = "safe_search"
         static let Text = "text"
         static let BoundingBox = "bbox"
+        static let PerPage = "per_page"
         static let Page = "page"
     }
     

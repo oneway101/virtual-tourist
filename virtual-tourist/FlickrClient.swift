@@ -16,12 +16,14 @@ class FlickrClient: NSObject {
     
     // MARK: Flickr API
     
-    func getImagesFromFlickr(_ bbox: String, _ completionHandler: @escaping (_ result: [[String:AnyObject]]?, _ error: NSError?) -> Void) {
+    func getImagesFromFlickr(_ bbox: String, _ completionHandler: @escaping (_ result: [String]?, _ error: NSError?) -> Void) {
         
         let methodParameters: [String:String] = [
             Constants.FlickrParameterKeys.Method: Constants.FlickrParameterValues.SearchMethod,
             Constants.FlickrParameterKeys.APIKey: Constants.FlickrParameterValues.APIKey,
             Constants.FlickrParameterKeys.BoundingBox: bbox,
+            Constants.FlickrParameterKeys.PerPage: "21",
+            Constants.FlickrParameterKeys.Page: "10",
             Constants.FlickrParameterKeys.SafeSearch: Constants.FlickrParameterValues.UseSafeSearch,
             Constants.FlickrParameterKeys.Extras: Constants.FlickrParameterValues.MediumURL,
             Constants.FlickrParameterKeys.Format: Constants.FlickrParameterValues.ResponseFormat,
@@ -57,8 +59,17 @@ class FlickrClient: NSObject {
                 return
             }
             
-            completionHandler(photosArray, nil)
+            var imageUrlStrings = [String]()
             
+            for url in photosArray {
+                guard let urlString = url[Constants.FlickrResponseKeys.MediumURL] as? String else {
+                    displayError("Cannot find key '\(Constants.FlickrResponseKeys.MediumURL)' in \(photosArray)")
+                    return
+                }
+                imageUrlStrings.append(urlString)
+                
+            }
+            completionHandler(imageUrlStrings, nil)
         }
         
         // start the task!
@@ -102,6 +113,20 @@ class FlickrClient: NSObject {
         
         task.resume()
         return task
+    }
+    
+    func getDataFromUrl(_ urlString: String, _ completionHandler: @escaping (_ imageData: Data?, _ error: NSError?) -> Void) {
+        
+        guard let url = URL(string: urlString) else { return }
+        let request = URLRequest(url: url)
+        let task = taskForGETMethod(request: request) { (parsedResult, error) in
+            guard error == nil else {
+                completionHandler(nil, error)
+                return
+            }
+            completionHandler(parsedResult as! Data?, nil)
+        }
+        task.resume()
     }
 
     // MARK: Helper for Creating a URL from Parameters

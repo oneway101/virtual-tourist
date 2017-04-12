@@ -20,52 +20,49 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     
     var selectedPin:Pin!
     var selectedPinLocation:String!
-    var imageUrls:[URL]!
+    var photoData:[Photo]!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
+        mapView.delegate = self
         // Register cell classes
         photoCollectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: reuseIdentifier)
-        //let selectedPinLocation = bboxString(longitude: selectedPin.longitude, latitude: selectedPin.latitude)
+        addSelectedAnnotation()
         print(selectedPinLocation)
         getPhotos()
     }
     
     func getPhotos(){
         FlickrClient.sharedInstance.getImagesFromFlickr(selectedPinLocation) { (results, error) in
+            
             guard error == nil else {
                 print(error)
                 return
             }
-            if let photosArray = results {
-                
-                if photosArray.count == 0 {
-                    print("No photos in photosArray.")
-                    return
-                }
-                print("\(photosArray.count) photos in phtosArray.")
-                for photo in photosArray {
+            
+            for urlString in results! {
+                print("urlString: \(urlString)")
+                FlickrClient.sharedInstance.getDataFromUrl(urlString, { (imageData, error) in
+                    //guard let imageData = imageData else { return }
+                    performUIUpdatesOnMain {
+                        let context = CoreDataStack.getContext()
+                        let photo:Photo = NSEntityDescription.insertNewObject(forEntityName: "Photo", into: context ) as! Photo
+                        photo.imageData = imageData as NSData?
+                        CoreDataStack.saveContext()
+                        print("Downloaded the image to context.")
+                    }
                     
-                    guard let imageUrlString = photo[Constants.FlickrResponseKeys.MediumURL] as? String else {
-                        print("Cannot find key '\(Constants.FlickrResponseKeys.MediumURL)' in \(photosArray)")
-                        return
-                    }
-                    if let imageUrl = URL(string: imageUrlString) {
-                        self.imageUrls.append(imageUrl)
-                    }
-                }
+                })
             }
         }
     }
+    
+    
 
     @IBAction func newCollection(_ sender: Any) {
         
     }
-
+    
     // MARK: UICollectionViewDataSource
 
 
@@ -75,14 +72,15 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoAlbumCell
-        
-        for url in imageUrls {
-            let context = CoreDataStack.getContext()
-            let photo:Photo = NSEntityDescription.insertNewObject(forEntityName: "Photo", into: context ) as! Photo
-            let downloadedImage = cell.photoImageView.downloadedFrom(url: url)
-            photo.imageString = downloadedImage
-            CoreDataStack.saveContext()
-
+        let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
+        do{
+            let searchResults = try CoreDataStack.getContext().fetch(fetchRequest)
+            for result in searchResults {
+                cell.photoImageView.image = UIImage(data: result.imageData as! Data)
+                print("Image fetched.")
+            }
+        } catch {
+            print("Error: \(error)")
         }
         return cell
     }
@@ -117,6 +115,24 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     
     }
     */
+    
+    //Mark: Show Selected Pin on MapView
+    func addSelectedAnnotation(){
+        let annotation = MKPointAnnotation()
+        let lat = CLLocationDegrees(selectedPin.latitude)
+        let lon = CLLocationDegrees(selectedPin.longitude)
+        let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        annotation.coordinate = coordinate
+        
+        //zoom into an appropriate region
+        let span = MKCoordinateSpanMake(0.25, 0.25)
+        let region = MKCoordinateRegion(center: coordinate, span: span)
+        
+        performUIUpdatesOnMain {
+            self.mapView.addAnnotation(annotation)
+            self.mapView.setRegion(region, animated: true)
+        }
+    }
 
 }
 

@@ -159,6 +159,7 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
         if segue.identifier == "PhotoAlbumView" {
             let controller = segue.destination as! PhotoAlbumViewController
             let selectedPin = sender as! Pin
+            controller.selectedPin = selectedPin
             controller.selectedPinLocation = bboxString(longitude:selectedPin.longitude , latitude: selectedPin.latitude)
         }
     }
