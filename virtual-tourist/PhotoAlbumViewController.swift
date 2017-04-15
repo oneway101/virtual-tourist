@@ -33,26 +33,22 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     }
     
     func getPhotos(){
+        
+        // check that photos for the pin are there in core data or not?
+        // fetchrequest -> Photo , pin (if photo exist on selected pin)
+        // collectionview.reloadata
+        // if not, then only call getImagesFromFlickr
         FlickrClient.sharedInstance.getImagesFromFlickr(selectedPinLocation) { (results, error) in
             
             guard error == nil else {
-                print(error)
+                self.displayAlert(title: "Could not get photos from flickr", message: error?.localizedDescription)
                 return
             }
-            
-            for urlString in results! {
-                print("urlString: \(urlString)")
-                FlickrClient.sharedInstance.getDataFromUrl(urlString, { (imageData, error) in
-                    //guard let imageData = imageData else { return }
-                    performUIUpdatesOnMain {
-                        let context = CoreDataStack.getContext()
-                        let photo:Photo = NSEntityDescription.insertNewObject(forEntityName: "Photo", into: context ) as! Photo
-                        photo.imageData = imageData as NSData?
-                        CoreDataStack.saveContext()
-                        print("Downloaded the image to context.")
-                    }
-                    
-                })
+            // add results to photoData and reload collectionview
+            performUIUpdatesOnMain {
+                self.photoData = results
+                print(self.photoData.count)
+                self.photoCollectionView.reloadData()
             }
         }
     }
@@ -67,21 +63,42 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
 
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 12
+        return photoData.count
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoAlbumCell
-        let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
-        do{
-            let searchResults = try CoreDataStack.getContext().fetch(fetchRequest)
-            for result in searchResults {
-                cell.photoImageView.image = UIImage(data: result.imageData as! Data)
-                print("Image fetched.")
+        
+        let photo = photoData[indexPath.row]
+        // if photo.imageData exists fetch
+        
+        // else get imageData from photoData urlString
+        // photo.urlString -> imageData
+        // photo.imageData = imageData
+        // assign UIImage to cell.photoImageView.image (asynchronous)
+        
+        FlickrClient.sharedInstance.getDataFromUrl(photo.urlString!) { (results, error) in
+            guard let imageData = results else {
+                return
             }
-        } catch {
-            print("Error: \(error)")
+            photo.imageData = imageData as NSData?
+            performUIUpdatesOnMain {
+                cell.photoImageView.image = UIImage(data: photo.imageData as! Data)
+            }
+            
         }
+        
+        
+//        let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
+//        do{
+//            let searchResults = try CoreDataStack.getContext().fetch(fetchRequest)
+//            for result in searchResults {
+//                cell.photoImageView.image = UIImage(data: result.imageData as! Data)
+//                print("Image fetched.")
+//            }
+//        } catch {
+//            print("Error: \(error)")
+//        }
         return cell
     }
 

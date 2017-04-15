@@ -16,7 +16,7 @@ class FlickrClient: NSObject {
     
     // MARK: Flickr API
     
-    func getImagesFromFlickr(_ bbox: String, _ completionHandler: @escaping (_ result: [String]?, _ error: NSError?) -> Void) {
+    func getImagesFromFlickr(_ bbox: String, _ completionHandler: @escaping (_ result: [Photo]?, _ error: NSError?) -> Void) {
         
         let methodParameters: [String:String] = [
             Constants.FlickrParameterKeys.Method: Constants.FlickrParameterValues.SearchMethod,
@@ -59,14 +59,25 @@ class FlickrClient: NSObject {
                 return
             }
             
-            var imageUrlStrings = [String]()
+            let context = CoreDataStack.getContext()
+            let photo:Photo = NSEntityDescription.insertNewObject(forEntityName: "Photo", into: context ) as! Photo
+            var imageUrlStrings = [Photo]()
             
             for url in photosArray {
                 guard let urlString = url[Constants.FlickrResponseKeys.MediumURL] as? String else {
                     displayError("Cannot find key '\(Constants.FlickrResponseKeys.MediumURL)' in \(photosArray)")
                     return
                 }
-                imageUrlStrings.append(urlString)
+                
+                // photo entity 
+                // save photo url to that entity
+                //assign pin to the entity
+                //[Photo] = results
+                
+                //print(urlString)
+                photo.urlString = urlString
+                imageUrlStrings.append(photo)
+                CoreDataStack.saveContext()
                 
             }
             completionHandler(imageUrlStrings, nil)
@@ -85,7 +96,6 @@ class FlickrClient: NSObject {
             
             // display error
             func displayError(_ error: String) {
-                print(error)
                 let userInfo = [NSLocalizedDescriptionKey : error]
                 completionHandlerForGET(nil, NSError(domain: "taskForGETMethod", code: 1, userInfo: userInfo))
             }
