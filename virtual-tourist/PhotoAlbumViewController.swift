@@ -10,7 +10,7 @@ import UIKit
 import MapKit
 import CoreData
 
-private let reuseIdentifier = "Cell"
+private let reuseIdentifier = "PhotoAlbumCell"
 
 class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, MKMapViewDelegate {
     
@@ -20,15 +20,17 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     
     var selectedPin:Pin!
     var selectedPinLocation:String!
-    var photoData:[Photo]!
+    var photoData:[Photo] = [Photo]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         mapView.delegate = self
         // Register cell classes
+        photoCollectionView.delegate = self
+        photoCollectionView.dataSource = self
         photoCollectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: reuseIdentifier)
         addSelectedAnnotation()
-        print(selectedPinLocation)
+        print("selected pin location: \(selectedPinLocation)")
         getPhotos()
     }
     
@@ -46,9 +48,13 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
             }
             // add results to photoData and reload collectionview
             performUIUpdatesOnMain {
-                self.photoData = results
-                print(self.photoData.count)
-                self.photoCollectionView.reloadData()
+                if results != nil {
+                    self.photoData = results!
+                    
+                    print("photo data: \(self.photoData.count)")
+                    self.photoCollectionView.reloadData()
+                }
+                
             }
         }
     }
@@ -67,7 +73,14 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoAlbumCell
+        
+        let photocell = collectionView.dequeueReusableCell(withReuseIdentifier: "photoCell", for: indexPath) as? PhotoAlbumCell
+        
+        if photocell != nil {
+            print("non nil cell")
+        }
+        
+        //let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoAlbumCell
         
         let photo = photoData[indexPath.row]
         // if photo.imageData exists fetch
@@ -79,11 +92,12 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         
         FlickrClient.sharedInstance.getDataFromUrl(photo.urlString!) { (results, error) in
             guard let imageData = results else {
+                self.displayAlert(title: "Image data error", message: error)
                 return
             }
             photo.imageData = imageData as NSData?
             performUIUpdatesOnMain {
-                cell.photoImageView.image = UIImage(data: photo.imageData as! Data)
+            photocell!.photoImageView.image = UIImage(data: photo.imageData as! Data)
             }
             
         }
@@ -99,7 +113,7 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
 //        } catch {
 //            print("Error: \(error)")
 //        }
-        return cell
+        return photocell!
     }
 
     // MARK: UICollectionViewDelegate

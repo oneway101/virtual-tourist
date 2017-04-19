@@ -58,29 +58,32 @@ class FlickrClient: NSObject {
                 displayError("Cannot find key '\(Constants.FlickrResponseKeys.Photo)' in \(photosDictionary)")
                 return
             }
+            performUIUpdatesOnMain {
             
-            let context = CoreDataStack.getContext()
-            let photo:Photo = NSEntityDescription.insertNewObject(forEntityName: "Photo", into: context ) as! Photo
-            var imageUrlStrings = [Photo]()
-            
-            for url in photosArray {
-                guard let urlString = url[Constants.FlickrResponseKeys.MediumURL] as? String else {
-                    displayError("Cannot find key '\(Constants.FlickrResponseKeys.MediumURL)' in \(photosArray)")
-                    return
+                let context = CoreDataStack.getContext()
+                //let photo:Photo = NSEntityDescription.insertNewObject(forEntityName: "Photo", into: context ) as! Photo
+                var imageUrlStrings = [Photo]()
+                
+                for url in photosArray {
+                    guard let urlString = url[Constants.FlickrResponseKeys.MediumURL] as? String else {
+                        displayError("Cannot find key '\(Constants.FlickrResponseKeys.MediumURL)' in \(photosArray)")
+                        return
+                    }
+                     let photo:Photo = NSEntityDescription.insertNewObject(forEntityName: "Photo", into: context ) as! Photo
+                    // photo entity 
+                    // save photo url to that entity
+                    //assign pin to the entity
+                    //[Photo] = results
+                    
+                    //print(urlString)
+                    photo.urlString = urlString
+                    imageUrlStrings.append(photo)
+                    CoreDataStack.saveContext()
+                    
                 }
-                
-                // photo entity 
-                // save photo url to that entity
-                //assign pin to the entity
-                //[Photo] = results
-                
-                //print(urlString)
-                photo.urlString = urlString
-                imageUrlStrings.append(photo)
-                CoreDataStack.saveContext()
-                
+                completionHandler(imageUrlStrings, nil)
             }
-            completionHandler(imageUrlStrings, nil)
+            
         }
         
         // start the task!
@@ -125,16 +128,16 @@ class FlickrClient: NSObject {
         return task
     }
     
-    func getDataFromUrl(_ urlString: String, _ completionHandler: @escaping (_ imageData: Data?, _ error: NSError?) -> Void) {
+    func getDataFromUrl(_ urlString: String, _ completionHandler: @escaping (_ imageData: Data?, _ error: String?) -> Void) {
         
         guard let url = URL(string: urlString) else { return }
         let request = URLRequest(url: url)
-        let task = taskForGETMethod(request: request) { (parsedResult, error) in
+        let task = session.dataTask(with: request) { (data, response, error) in
             guard error == nil else {
-                completionHandler(nil, error)
+                completionHandler(nil, error?.localizedDescription)
                 return
             }
-            completionHandler(parsedResult as! Data?, nil)
+            completionHandler(data, nil)
         }
         task.resume()
     }

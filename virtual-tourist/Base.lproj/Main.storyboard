@@ -103,6 +103,28 @@
                                             <outlet property="photoImageView" destination="CNY-fp-JMj" id="lfC-B6-f2S"/>
                                         </connections>
                                     </collectionViewCell>
+                                    <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="photoCell" id="CHd-U7-0E8" customClass="PhotoAlbumCell" customModule="virtual_tourist" customModuleProvider="target">
+                                        <rect key="frame" x="138" y="0.0" width="100" height="100"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                                            <rect key="frame" x="0.0" y="0.0" width="100" height="100"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="5hn-Qu-TFb">
+                                                    <rect key="frame" x="0.0" y="0.0" width="100" height="100"/>
+                                                </imageView>
+                                            </subviews>
+                                        </view>
+                                        <constraints>
+                                            <constraint firstAttribute="trailing" secondItem="5hn-Qu-TFb" secondAttribute="trailing" id="4XD-yG-UNF"/>
+                                            <constraint firstAttribute="bottom" secondItem="5hn-Qu-TFb" secondAttribute="bottom" id="5Bx-Wq-RIZ"/>
+                                            <constraint firstItem="5hn-Qu-TFb" firstAttribute="leading" secondItem="CHd-U7-0E8" secondAttribute="leading" id="gV1-T8-hjN"/>
+                                            <constraint firstItem="5hn-Qu-TFb" firstAttribute="top" secondItem="CHd-U7-0E8" secondAttribute="top" id="kyN-9D-fPW"/>
+                                        </constraints>
+                                        <connections>
+                                            <outlet property="photoImageView" destination="5hn-Qu-TFb" id="Kl7-MO-kdl"/>
+                                        </connections>
+                                    </collectionViewCell>
                                 </cells>
                             </collectionView>
                             <button opaque="NO" contentMode="bottom" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="jC5-d5-WSV">
