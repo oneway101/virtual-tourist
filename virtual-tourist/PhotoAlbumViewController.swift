@@ -22,13 +22,14 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     
     var selectedPin:Pin!
     var photoData:[Photo] = [Photo]()
+    var selectedIndexPaths = [NSIndexPath]()
     
     // MARK: Core Data FetchResultController
     //Q: What is lazy?
-    lazy var fetchResultController: NSFetchedResultsController = { () -> NSFetchedResultsController<NSFetchRequestResult> in
+    lazy var fetchResultController: NSFetchedResultsController<NSFetchRequestResult> = {
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Photo")
-        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "photo", ascending: false)]
-        fetchRequest.predicate = NSPredicate(format: "pin = %@")
+        //fetchRequest.sortDescriptors = [NSSortDescriptor(key: "photo", ascending: false)]
+        //fetchRequest.predicate = NSPredicate(format: "pin == %@")
         let context = CoreDataStack.getContext()
         let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: context, sectionNameKeyPath: nil, cacheName: nil)
         return fetchedResultsController
@@ -44,6 +45,7 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         addSelectedAnnotation()
         print("selected pin location: \(selectedPin)")
         fetchPhotos()
+        //getPhotosFromFlickr()
         
         // MARK: Set spacing between items
         let space: CGFloat = 3.0
@@ -141,39 +143,31 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
                 
             }
         }
+        
+        if let _ = selectedIndexPaths.index(of: indexPath as NSIndexPath) {
+            photoCell!.photoImageView.alpha = 0.25
+        } else {
+            photoCell!.photoImageView.alpha = 1.0
+        }
+        
         return photoCell!
     }
-
-    // MARK: UICollectionViewDelegate
-
-    /*
-    // Uncomment this method to specify if the specified item should be highlighted during tracking
-    override func collectionView(_ collectionView: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
-        return true
-    }
-    */
-
-    /*
-    // Uncomment this method to specify if the specified item should be selected
-    override func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
-        return true
-    }
-    */
-
-    /*
-    // Uncomment these methods to specify if an action menu should be displayed for the specified item, and react to actions performed on the item
-    override func collectionView(_ collectionView: UICollectionView, shouldShowMenuForItemAt indexPath: IndexPath) -> Bool {
-        return false
-    }
-
-    override func collectionView(_ collectionView: UICollectionView, canPerformAction action: Selector, forItemAt indexPath: IndexPath, withSender sender: Any?) -> Bool {
-        return false
-    }
-
-    override func collectionView(_ collectionView: UICollectionView, performAction action: Selector, forItemAt indexPath: IndexPath, withSender sender: Any?) {
     
+    func removeSelectedPhotos() {
+        let photoData = fetchResultController.fetchedObjects as! [Photo]
+        if selectedIndexPaths.count > 0 {
+            for indexPath in selectedIndexPaths {
+                let photo = photoData[indexPath.row]
+                CoreDataStack.getContext().delete(photo)
+            }
+            CoreDataStack.saveContext()
+        }
     }
-    */
+
+    func collectionView(_ collectionView: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
+        
+        return true
+    }
     
     //Mark: Show Selected Pin on MapView
     func addSelectedAnnotation(){
