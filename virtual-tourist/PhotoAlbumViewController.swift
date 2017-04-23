@@ -23,13 +23,14 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     var selectedPin:Pin!
     var photoData:[Photo] = [Photo]()
     var selectedIndexPaths = [NSIndexPath]()
+    var deletePhoto = false
     
     // MARK: Core Data FetchResultController
     //Q: What is lazy?
     lazy var fetchResultController: NSFetchedResultsController<NSFetchRequestResult> = {
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Photo")
-        //fetchRequest.sortDescriptors = [NSSortDescriptor(key: "photo", ascending: false)]
-        //fetchRequest.predicate = NSPredicate(format: "pin == %@")
+        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "photo", ascending: false)]
+        fetchRequest.predicate = NSPredicate(format: "pin == %@")
         let context = CoreDataStack.getContext()
         let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: context, sectionNameKeyPath: nil, cacheName: nil)
         return fetchedResultsController
@@ -45,7 +46,6 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         addSelectedAnnotation()
         print("selected pin location: \(selectedPin)")
         fetchPhotos()
-        //getPhotosFromFlickr()
         
         // MARK: Set spacing between items
         let space: CGFloat = 3.0
@@ -64,10 +64,8 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         // collectionview.reloadata
         // if not, then call getImagesFromFlickr
         
-        if selectedPin.photos != nil {
-            
-            photoData = fetchResultController.fetchedObjects as! [Photo]
-            
+        if let data = fetchResultController.fetchedObjects as? [Photo] {
+            photoData = data
         } else {
             getPhotosFromFlickr()
         }
@@ -95,18 +93,25 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
 
     @IBAction func newCollection(_ sender: Any) {
         
-        for photo in fetchResultController.fetchedObjects as! [Photo]{
-            CoreDataStack.getContext().delete(photo)
-            CoreDataStack.saveContext()
+        if deletePhoto {
+            newCollectionButton.titleLabel?.text = "New Collection"
+            removeSelectedPhotos()
+            deletePhoto = false
+        } else {
+            getPhotosFromFlickr()
         }
         
-        CoreDataStack.saveContext()
-        getPhotosFromFlickr()
+//        for photo in fetchResultController.fetchedObjects as! [Photo]{
+//            CoreDataStack.getContext().delete(photo)
+//            CoreDataStack.saveContext()
+//        }
+//        
+//        CoreDataStack.saveContext()
+//        getPhotosFromFlickr()
     }
     
     // MARK: UICollectionViewDataSource
-
-
+    
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return photoData.count
     }
@@ -144,12 +149,6 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
             }
         }
         
-        if let _ = selectedIndexPaths.index(of: indexPath as NSIndexPath) {
-            photoCell!.photoImageView.alpha = 0.25
-        } else {
-            photoCell!.photoImageView.alpha = 1.0
-        }
-        
         return photoCell!
     }
     
@@ -159,14 +158,32 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
             for indexPath in selectedIndexPaths {
                 let photo = photoData[indexPath.row]
                 CoreDataStack.getContext().delete(photo)
+                print("photo deleted ")
             }
             CoreDataStack.saveContext()
         }
+        selectedIndexPaths = [NSIndexPath]()
     }
-
-    func collectionView(_ collectionView: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let selectedCell = collectionView.cellForItem(at: indexPath) as! PhotoAlbumCell
         
-        return true
+        let index = selectedIndexPaths.index(of: indexPath as NSIndexPath)
+        if let index = index {
+            selectedIndexPaths.remove(at: index)
+            selectedCell.photoImageView.alpha = 1.0
+        } else {
+            selectedIndexPaths.append(indexPath as NSIndexPath)
+            selectedCell.photoImageView.alpha = 0.25
+        }
+        
+        if selectedIndexPaths.count > 0 {
+            deletePhoto = true
+            newCollectionButton.titleLabel?.text = "Delete"
+        } else {
+            newCollectionButton.titleLabel?.text = "New Collection"
+        }
+        
     }
     
     //Mark: Show Selected Pin on MapView
@@ -187,9 +204,6 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         }
     }
     
-    
-    
-
 }
 
 extension UIImageView {
