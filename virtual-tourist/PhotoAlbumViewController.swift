@@ -12,7 +12,7 @@ import CoreData
 
 private let reuseIdentifier = "PhotoAlbumCell"
 
-class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, MKMapViewDelegate {
+class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, MKMapViewDelegate, NSFetchedResultsControllerDelegate {
     
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var photoCollectionView: UICollectionView!
@@ -24,17 +24,20 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     var photoData:[Photo] = [Photo]()
     var selectedIndexPaths = [NSIndexPath]()
     var deletePhoto = false
+    var currentPage = 0
+    
+    
+    private let persistentContainer = NSPersistentContainer(name: "Photo")
     
     // MARK: Core Data FetchResultController
-    //Q: What is lazy?
-    lazy var fetchResultController: NSFetchedResultsController<NSFetchRequestResult> = {
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Photo")
-        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "photo", ascending: false)]
-        fetchRequest.predicate = NSPredicate(format: "pin == %@")
-        let context = CoreDataStack.getContext()
-        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: context, sectionNameKeyPath: nil, cacheName: nil)
-        return fetchedResultsController
-    }()
+//   lazy var fetchedResultsController: NSFetchedResultsController = {        let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
+//        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "photo", ascending: false)]
+//        fetchRequest.predicate = NSPredicate(format: "pin == %@", selectedPin!)
+//        let context = CoreDataStack.getContext()
+//        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: context, sectionNameKeyPath: nil, cacheName: nil)
+//        fetchedResultsController.delegate = self
+//        return fetchedResultsController
+//    }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -45,6 +48,7 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         photoCollectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: reuseIdentifier)
         addSelectedAnnotation()
         print("selected pin location: \(selectedPin)")
+        
         fetchPhotos()
         
         // MARK: Set spacing between items
@@ -64,16 +68,34 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         // collectionview.reloadata
         // if not, then call getImagesFromFlickr
         
-        if let data = fetchResultController.fetchedObjects as? [Photo] {
+        //MARK: Fetch Request
+        let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
+        fetchRequest.sortDescriptors = []
+        fetchRequest.predicate = NSPredicate(format: "pin = %@", selectedPin!)
+        let context = CoreDataStack.getContext()
+        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: context, sectionNameKeyPath: nil, cacheName: nil)
+        
+        do {
+            try fetchedResultsController.performFetch()
+            
+        } catch {
+            let fetchError = error as NSError
+            print("Unable to Perform Fetch Request")
+            print("\(fetchError), \(fetchError.localizedDescription)")
+        }
+        
+        if let data = fetchedResultsController.fetchedObjects, data.count > 0 {
+            print("core data count: \(data.count)")
             photoData = data
+            self.photoCollectionView.reloadData()
         } else {
-            getPhotosFromFlickr()
+            getPhotosFromFlickr(page:currentPage)
         }
     }
     
     //MARK: get new photos from flickr
-    func getPhotosFromFlickr(){
-        FlickrClient.sharedInstance.getImagesFromFlickr(selectedPin) { (results, error) in
+    func getPhotosFromFlickr(page:Int){
+        FlickrClient.sharedInstance.getImagesFromFlickr(selectedPin,currentPage) { (results, error) in
             
             guard error == nil else {
                 self.displayAlert(title: "Could not get photos from flickr", message: error?.localizedDescription)
@@ -96,18 +118,31 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         if deletePhoto {
             newCollectionButton.titleLabel?.text = "New Collection"
             removeSelectedPhotos()
+            self.photoCollectionView.reloadData()
             deletePhoto = false
         } else {
-            getPhotosFromFlickr()
+            for photo in photoData {
+                CoreDataStack.getContext().delete(photo)
+            }
+            CoreDataStack.saveContext()
+            currentPage += 1
+            getPhotosFromFlickr(page: currentPage)
+            
         }
-        
-//        for photo in fetchResultController.fetchedObjects as! [Photo]{
-//            CoreDataStack.getContext().delete(photo)
-//            CoreDataStack.saveContext()
-//        }
-//        
-//        CoreDataStack.saveContext()
-//        getPhotosFromFlickr()
+    }
+    
+    func removeSelectedPhotos() {
+        if selectedIndexPaths.count > 0 {
+            for indexPath in selectedIndexPaths {
+                let photo = photoData[indexPath.row]
+                CoreDataStack.getContext().delete(photo)
+                self.photoData.remove(at: indexPath.row)
+                self.photoCollectionView.deleteItems(at: [indexPath as IndexPath])
+                print("photo deleted")
+            }
+            CoreDataStack.saveContext()
+        }
+        selectedIndexPaths = [NSIndexPath]()
     }
     
     // MARK: UICollectionViewDataSource
@@ -152,23 +187,12 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         return photoCell!
     }
     
-    func removeSelectedPhotos() {
-        let photoData = fetchResultController.fetchedObjects as! [Photo]
-        if selectedIndexPaths.count > 0 {
-            for indexPath in selectedIndexPaths {
-                let photo = photoData[indexPath.row]
-                CoreDataStack.getContext().delete(photo)
-                print("photo deleted ")
-            }
-            CoreDataStack.saveContext()
-        }
-        selectedIndexPaths = [NSIndexPath]()
-    }
-    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let selectedCell = collectionView.cellForItem(at: indexPath) as! PhotoAlbumCell
         
         let index = selectedIndexPaths.index(of: indexPath as NSIndexPath)
+        print("index \(index)")
+        
         if let index = index {
             selectedIndexPaths.remove(at: index)
             selectedCell.photoImageView.alpha = 1.0
@@ -176,12 +200,14 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
             selectedIndexPaths.append(indexPath as NSIndexPath)
             selectedCell.photoImageView.alpha = 0.25
         }
+        print("selectedIndexPaths: \(selectedIndexPaths)")
         
         if selectedIndexPaths.count > 0 {
             deletePhoto = true
-            newCollectionButton.titleLabel?.text = "Delete"
+            newCollectionButton.setTitle("Delete", for: .normal)
         } else {
-            newCollectionButton.titleLabel?.text = "New Collection"
+            deletePhoto = false
+            newCollectionButton.setTitle("New Collection", for: .normal)
         }
         
     }

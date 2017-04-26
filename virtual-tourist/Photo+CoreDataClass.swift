@@ -2,7 +2,7 @@
 //  Photo+CoreDataClass.swift
 //  virtual-tourist
 //
-//  Created by Ha Na Gill on 4/15/17.
+//  Created by Ha Na Gill on 4/24/17.
 //  Copyright © 2017 Ha Na Gill. All rights reserved.
 //
 

@@ -16,7 +16,7 @@ class FlickrClient: NSObject {
     
     // MARK: Flickr API
     
-    func getImagesFromFlickr(_ selectedPin: Pin, _ completionHandler: @escaping (_ result: [Photo]?, _ error: NSError?) -> Void) {
+    func getImagesFromFlickr(_ selectedPin: Pin, _ page: Int, _ completionHandler: @escaping (_ result: [Photo]?, _ error: NSError?) -> Void) {
         
         let methodParameters: [String:String] = [
             Constants.FlickrParameterKeys.Method: Constants.FlickrParameterValues.SearchMethod,
@@ -25,7 +25,7 @@ class FlickrClient: NSObject {
             Constants.FlickrParameterKeys.Latitude: "\(selectedPin.latitude)",
             Constants.FlickrParameterKeys.Longitude: "\(selectedPin.longitude)",
             Constants.FlickrParameterKeys.PerPage: "21",
-            Constants.FlickrParameterKeys.Page: "10",
+            Constants.FlickrParameterKeys.Page: "\(page)",
             Constants.FlickrParameterKeys.SafeSearch: Constants.FlickrParameterValues.UseSafeSearch,
             Constants.FlickrParameterKeys.Extras: Constants.FlickrParameterValues.MediumURL,
             Constants.FlickrParameterKeys.Format: Constants.FlickrParameterValues.ResponseFormat,
@@ -79,7 +79,7 @@ class FlickrClient: NSObject {
                     
                     //print(urlString)
                     photo.urlString = urlString
-                    photo.addToPins(selectedPin)
+                    photo.pin = selectedPin
                     imageUrlStrings.append(photo)
                     CoreDataStack.saveContext()
                     
