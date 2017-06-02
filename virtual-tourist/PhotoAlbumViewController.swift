@@ -23,7 +23,7 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     var selectedPin:Pin!
     var photoData:[Photo] = [Photo]()
     var selectedIndexPaths = [NSIndexPath]()
-    var deletePhoto = false
+    var photosSelected = false
     var currentPage = 0
     
     private let persistentContainer = NSPersistentContainer(name: "Photo")
@@ -105,11 +105,11 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
 
     @IBAction func newCollection(_ sender: Any) {
         
-        if deletePhoto {
-            newCollectionButton.titleLabel?.text = "New Collection"
+        if photosSelected {
             removeSelectedPhotos()
             self.photoCollectionView.reloadData()
-            deletePhoto = false
+            photosSelected = false
+            newCollectionButton.setTitle("New Collection", for: .normal)
         } else {
             for photo in photoData {
                 CoreDataStack.getContext().delete(photo)
@@ -117,8 +117,9 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
             CoreDataStack.saveContext()
             currentPage += 1
             getPhotosFromFlickr(page: currentPage)
-            
+
         }
+        
     }
     
     func removeSelectedPhotos() {
@@ -201,15 +202,21 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
             cell.photoImageView.alpha = 1.0
         } else {
             selectedIndexPaths.append(indexPath as NSIndexPath)
+            print(selectedIndexPaths)
+            selectedIndexPaths.sort{$1.row < $0.row}
+            print("Selected IndexPaths: \(selectedIndexPaths)")
+
             cell.photoImageView.alpha = 0.25
         }
         
         if selectedIndexPaths.count > 0 {
-            deletePhoto = true
             newCollectionButton.setTitle("Delete", for: .normal)
+            photosSelected = true
+
         } else {
-            deletePhoto = false
             newCollectionButton.setTitle("New Collection", for: .normal)
+            photosSelected = false
+
         }
         
     }
