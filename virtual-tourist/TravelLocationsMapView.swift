@@ -45,7 +45,7 @@ class TravelLocationsMapView: UIViewController, MKMapViewDelegate {
     
     func dropPin(gestureRecognizer:UILongPressGestureRecognizer){
         
-        if gestureRecognizer.state == UIGestureRecognizerState.ended {
+        if gestureRecognizer.state == UIGestureRecognizerState.began {
             let location = gestureRecognizer.location(in: mapView)
             let newCoordinates = mapView.convert(location, toCoordinateFrom: mapView)
             let annotation = MKPointAnnotation()

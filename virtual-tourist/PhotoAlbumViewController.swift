@@ -174,8 +174,9 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
                     self.displayAlert(title: "Image data error", message: error)
                     return
                 }
-                photo.imageData = imageData as NSData?
+                
                 performUIUpdatesOnMain {
+                    photo.imageData = imageData as NSData?
                     photoCell!.activityIndicator.stopAnimating()
                 photoCell!.photoImageView.image = UIImage(data: photo.imageData as! Data)
                 }
